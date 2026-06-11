@@ -1325,6 +1325,53 @@ extern "C"
     WGPUBool wgpuDeviceStartGraphicsDebuggerCapture(WGPUDevice device);
     void wgpuDeviceStopGraphicsDebuggerCapture(WGPUDevice device);
 
+    /**
+     * Returns the VkInstance handle as an opaque pointer (cast to VkInstance via uintptr_t).
+     *
+     * The returned handle is borrowed and remains valid while the adapter is alive.
+     * Returns NULL when the active backend is not Vulkan.
+     */
+    void *wgpuAdapterGetNativeVkInstance(WGPUAdapter adapter);
+
+    /**
+     * Returns the VkPhysicalDevice handle as an opaque pointer (cast to VkPhysicalDevice via uintptr_t).
+     *
+     * The returned handle is borrowed and remains valid while the adapter is alive.
+     * Returns NULL when the active backend is not Vulkan.
+     */
+    void *wgpuAdapterGetNativeVkPhysicalDevice(WGPUAdapter adapter);
+
+    /**
+     * Returns the VkDevice handle as an opaque pointer (cast to VkDevice via uintptr_t).
+     *
+     * The returned handle is borrowed and remains valid while the device is alive.
+     * Returns NULL when the active backend is not Vulkan.
+     */
+    void *wgpuDeviceGetNativeVkDevice(WGPUDevice device);
+
+    /**
+     * Returns the VkQueue handle as an opaque pointer (cast to VkQueue via uintptr_t).
+     *
+     * The returned handle is borrowed and remains valid while the device is alive.
+     * Returns NULL when the active backend is not Vulkan.
+     */
+    void *wgpuDeviceGetNativeVkQueue(WGPUDevice device);
+
+    /**
+     * Returns the Vulkan queue family index used by wgpu for the device's queue.
+     *
+     * Returns 0 when the active backend is not Vulkan.
+     */
+    uint32_t wgpuDeviceGetNativeVkQueueFamilyIndex(WGPUDevice device);
+
+    /**
+     * Wraps an externally-owned VkImage in a WGPUTexture without taking ownership of the image.
+     *
+     * The caller is responsible for keeping vkImage alive at least as long as the returned texture.
+     * Returns NULL when the active backend is not Vulkan.
+     */
+    WGPUTexture wgpuDeviceCreateTextureFromVkImage(WGPUDevice device, WGPUTextureDescriptor const *descriptor, void *vkImage);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

@@ -2632,6 +2632,213 @@ pub unsafe extern "C" fn wgpuDeviceGetNativeMetalDevice(device: native::WGPUDevi
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn wgpuAdapterGetNativeVkInstance(
+    adapter: native::WGPUAdapter,
+) -> *mut c_void {
+    #[cfg(feature = "vulkan")]
+    {
+        use ash::vk::Handle;
+        let adapter = adapter.as_ref().expect("invalid adapter");
+        let hal_adapter = adapter.context.adapter_as_hal::<hal::api::Vulkan>(adapter.id);
+        if let Some(hal_adapter) = hal_adapter {
+            return hal_adapter
+                .shared_instance()
+                .raw_instance()
+                .handle()
+                .as_raw() as usize as *mut c_void;
+        }
+        std::ptr::null_mut()
+    }
+    #[cfg(not(feature = "vulkan"))]
+    {
+        let _ = adapter;
+        std::ptr::null_mut()
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn wgpuAdapterGetNativeVkPhysicalDevice(
+    adapter: native::WGPUAdapter,
+) -> *mut c_void {
+    #[cfg(feature = "vulkan")]
+    {
+        use ash::vk::Handle;
+        let adapter = adapter.as_ref().expect("invalid adapter");
+        let hal_adapter = adapter.context.adapter_as_hal::<hal::api::Vulkan>(adapter.id);
+        if let Some(hal_adapter) = hal_adapter {
+            return hal_adapter.raw_physical_device().as_raw() as usize as *mut c_void;
+        }
+        std::ptr::null_mut()
+    }
+    #[cfg(not(feature = "vulkan"))]
+    {
+        let _ = adapter;
+        std::ptr::null_mut()
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn wgpuDeviceGetNativeVkDevice(device: native::WGPUDevice) -> *mut c_void {
+    #[cfg(feature = "vulkan")]
+    {
+        use ash::vk::Handle;
+        let device = device.as_ref().expect("invalid device");
+        let hal_device = device.context.device_as_hal::<hal::api::Vulkan>(device.id);
+        if let Some(hal_device) = hal_device {
+            return hal_device.raw_device().handle().as_raw() as usize as *mut c_void;
+        }
+        std::ptr::null_mut()
+    }
+    #[cfg(not(feature = "vulkan"))]
+    {
+        let _ = device;
+        std::ptr::null_mut()
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn wgpuDeviceGetNativeVkQueue(device: native::WGPUDevice) -> *mut c_void {
+    #[cfg(feature = "vulkan")]
+    {
+        use ash::vk::Handle;
+        let device = device.as_ref().expect("invalid device");
+        let hal_device = device.context.device_as_hal::<hal::api::Vulkan>(device.id);
+        if let Some(hal_device) = hal_device {
+            return hal_device.raw_queue().as_raw() as usize as *mut c_void;
+        }
+        std::ptr::null_mut()
+    }
+    #[cfg(not(feature = "vulkan"))]
+    {
+        let _ = device;
+        std::ptr::null_mut()
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn wgpuDeviceGetNativeVkQueueFamilyIndex(
+    device: native::WGPUDevice,
+) -> u32 {
+    #[cfg(feature = "vulkan")]
+    {
+        let device = device.as_ref().expect("invalid device");
+        let hal_device = device.context.device_as_hal::<hal::api::Vulkan>(device.id);
+        if let Some(hal_device) = hal_device {
+            return hal_device.queue_family_index();
+        }
+        0
+    }
+    #[cfg(not(feature = "vulkan"))]
+    {
+        let _ = device;
+        0
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn wgpuDeviceCreateTextureFromVkImage(
+    device: native::WGPUDevice,
+    descriptor: Option<&native::WGPUTextureDescriptor>,
+    vk_image: *mut c_void,
+) -> native::WGPUTexture {
+    #[cfg(feature = "vulkan")]
+    {
+        use ash::vk::Handle;
+
+        let (device_id, context, error_sink) = {
+            let device = device.as_ref().expect("invalid device");
+            (device.id, &device.context, &device.error_sink)
+        };
+        let descriptor = descriptor.expect("invalid descriptor");
+
+        let wgt_format = conv::map_texture_format(descriptor.format)
+            .expect("invalid texture format for texture descriptor");
+        let wgt_dim = conv::map_texture_dimension(descriptor.dimension)
+            .unwrap_or(wgt::TextureDimension::D2);
+        let wgt_size = conv::map_extent3d(&descriptor.size);
+
+        let label = string_view_into_label(descriptor.label);
+        let hal_desc = hal::TextureDescriptor {
+            label: label.as_deref(),
+            size: wgt_size,
+            mip_level_count: descriptor.mipLevelCount,
+            sample_count: descriptor.sampleCount,
+            dimension: wgt_dim,
+            format: wgt_format,
+            usage: wgt::TextureUses::empty(),
+            memory_flags: hal::MemoryFlags::empty(),
+            view_formats: vec![],
+        };
+
+        let vk_image_handle = ash::vk::Image::from_raw(vk_image as u64);
+
+        let hal_texture = {
+            let hal_device = context
+                .device_as_hal::<hal::api::Vulkan>(device_id)
+                .expect("device is not a Vulkan device");
+            unsafe {
+                hal_device.texture_from_raw(
+                    vk_image_handle,
+                    &hal_desc,
+                    None,
+                    hal::vulkan::TextureMemory::External,
+                )
+            }
+        };
+
+        let wgt_desc = wgt::TextureDescriptor {
+            label: string_view_into_label(descriptor.label),
+            size: wgt_size,
+            mip_level_count: descriptor.mipLevelCount,
+            sample_count: descriptor.sampleCount,
+            dimension: wgt_dim,
+            format: wgt_format,
+            usage: from_u64_bits(descriptor.usage)
+                .expect("invalid texture usage for texture descriptor"),
+            view_formats: make_slice(descriptor.viewFormats, descriptor.viewFormatCount)
+                .iter()
+                .map(|v| {
+                    conv::map_texture_format(*v)
+                        .expect("invalid view format for texture descriptor")
+                })
+                .collect(),
+        };
+
+        let (texture_id, error) =
+            context.create_texture_from_hal(Box::new(hal_texture), device_id, &wgt_desc, None);
+        if let Some(cause) = error {
+            handle_error(
+                error_sink,
+                cause,
+                wgt_desc.label,
+                "wgpuDeviceCreateTextureFromVkImage",
+            );
+        }
+
+        Arc::into_raw(Arc::new(WGPUTextureImpl {
+            context: context.clone(),
+            id: texture_id,
+            error_sink: error_sink.clone(),
+            surface_id: None,
+            has_surface_presented: Arc::default(),
+            data: TextureData {
+                usage: descriptor.usage,
+                dimension: descriptor.dimension,
+                size: descriptor.size,
+                format: descriptor.format,
+                mip_level_count: descriptor.mipLevelCount,
+                sample_count: descriptor.sampleCount,
+            },
+        }))
+    }
+    #[cfg(not(feature = "vulkan"))]
+    {
+        let _ = (device, descriptor, vk_image);
+        std::ptr::null_mut()
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn wgpuDeviceHasFeature(
     device: native::WGPUDevice,
     feature: native::WGPUFeatureName,

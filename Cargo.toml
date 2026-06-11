@@ -22,6 +22,9 @@ members = ["."]
 default-members = ["."]
 resolver = "2"
 
+[patch.crates-io]
+wgpu-hal = { path = "./patches/wgpu-hal" }
+
 [workspace.dependencies.wgc]
 package = "wgpu-core"
 version = "29.0.1"
@@ -130,6 +133,7 @@ thiserror = "2"
 parking_lot = "0.12"
 smallvec = "1"
 bitflags = "2"
+ash = "0.38"
 
 [build-dependencies]
 bindgen = "0.72"
