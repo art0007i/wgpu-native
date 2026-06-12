@@ -2639,7 +2639,9 @@ pub unsafe extern "C" fn wgpuAdapterGetNativeVkInstance(
     {
         use ash::vk::Handle;
         let adapter = adapter.as_ref().expect("invalid adapter");
-        let hal_adapter = adapter.context.adapter_as_hal::<hal::api::Vulkan>(adapter.id);
+        let hal_adapter = adapter
+            .context
+            .adapter_as_hal::<hal::api::Vulkan>(adapter.id);
         if let Some(hal_adapter) = hal_adapter {
             return hal_adapter
                 .shared_instance()
@@ -2664,7 +2666,9 @@ pub unsafe extern "C" fn wgpuAdapterGetNativeVkPhysicalDevice(
     {
         use ash::vk::Handle;
         let adapter = adapter.as_ref().expect("invalid adapter");
-        let hal_adapter = adapter.context.adapter_as_hal::<hal::api::Vulkan>(adapter.id);
+        let hal_adapter = adapter
+            .context
+            .adapter_as_hal::<hal::api::Vulkan>(adapter.id);
         if let Some(hal_adapter) = hal_adapter {
             return hal_adapter.raw_physical_device().as_raw() as usize as *mut c_void;
         }
@@ -2716,9 +2720,7 @@ pub unsafe extern "C" fn wgpuDeviceGetNativeVkQueue(device: native::WGPUDevice) 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn wgpuDeviceGetNativeVkQueueFamilyIndex(
-    device: native::WGPUDevice,
-) -> u32 {
+pub unsafe extern "C" fn wgpuDeviceGetNativeVkQueueFamilyIndex(device: native::WGPUDevice) -> u32 {
     #[cfg(all(feature = "vulkan", not(target_vendor = "apple")))]
     {
         let device = device.as_ref().expect("invalid device");
@@ -2753,8 +2755,8 @@ pub unsafe extern "C" fn wgpuDeviceCreateTextureFromVkImage(
 
         let wgt_format = conv::map_texture_format(descriptor.format)
             .expect("invalid texture format for texture descriptor");
-        let wgt_dim = conv::map_texture_dimension(descriptor.dimension)
-            .unwrap_or(wgt::TextureDimension::D2);
+        let wgt_dim =
+            conv::map_texture_dimension(descriptor.dimension).unwrap_or(wgt::TextureDimension::D2);
         let wgt_size = conv::map_extent3d(&descriptor.size);
 
         let label = string_view_into_label(descriptor.label);
