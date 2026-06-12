@@ -2635,7 +2635,7 @@ pub unsafe extern "C" fn wgpuDeviceGetNativeMetalDevice(device: native::WGPUDevi
 pub unsafe extern "C" fn wgpuAdapterGetNativeVkInstance(
     adapter: native::WGPUAdapter,
 ) -> *mut c_void {
-    #[cfg(feature = "vulkan")]
+    #[cfg(all(feature = "vulkan", not(target_vendor = "apple")))]
     {
         use ash::vk::Handle;
         let adapter = adapter.as_ref().expect("invalid adapter");
@@ -2649,7 +2649,7 @@ pub unsafe extern "C" fn wgpuAdapterGetNativeVkInstance(
         }
         std::ptr::null_mut()
     }
-    #[cfg(not(feature = "vulkan"))]
+    #[cfg(any(not(feature = "vulkan"), target_vendor = "apple"))]
     {
         let _ = adapter;
         std::ptr::null_mut()
@@ -2660,7 +2660,7 @@ pub unsafe extern "C" fn wgpuAdapterGetNativeVkInstance(
 pub unsafe extern "C" fn wgpuAdapterGetNativeVkPhysicalDevice(
     adapter: native::WGPUAdapter,
 ) -> *mut c_void {
-    #[cfg(feature = "vulkan")]
+    #[cfg(all(feature = "vulkan", not(target_vendor = "apple")))]
     {
         use ash::vk::Handle;
         let adapter = adapter.as_ref().expect("invalid adapter");
@@ -2670,7 +2670,7 @@ pub unsafe extern "C" fn wgpuAdapterGetNativeVkPhysicalDevice(
         }
         std::ptr::null_mut()
     }
-    #[cfg(not(feature = "vulkan"))]
+    #[cfg(any(not(feature = "vulkan"), target_vendor = "apple"))]
     {
         let _ = adapter;
         std::ptr::null_mut()
@@ -2679,7 +2679,7 @@ pub unsafe extern "C" fn wgpuAdapterGetNativeVkPhysicalDevice(
 
 #[no_mangle]
 pub unsafe extern "C" fn wgpuDeviceGetNativeVkDevice(device: native::WGPUDevice) -> *mut c_void {
-    #[cfg(feature = "vulkan")]
+    #[cfg(all(feature = "vulkan", not(target_vendor = "apple")))]
     {
         use ash::vk::Handle;
         let device = device.as_ref().expect("invalid device");
@@ -2689,7 +2689,7 @@ pub unsafe extern "C" fn wgpuDeviceGetNativeVkDevice(device: native::WGPUDevice)
         }
         std::ptr::null_mut()
     }
-    #[cfg(not(feature = "vulkan"))]
+    #[cfg(any(not(feature = "vulkan"), target_vendor = "apple"))]
     {
         let _ = device;
         std::ptr::null_mut()
@@ -2698,7 +2698,7 @@ pub unsafe extern "C" fn wgpuDeviceGetNativeVkDevice(device: native::WGPUDevice)
 
 #[no_mangle]
 pub unsafe extern "C" fn wgpuDeviceGetNativeVkQueue(device: native::WGPUDevice) -> *mut c_void {
-    #[cfg(feature = "vulkan")]
+    #[cfg(all(feature = "vulkan", not(target_vendor = "apple")))]
     {
         use ash::vk::Handle;
         let device = device.as_ref().expect("invalid device");
@@ -2708,7 +2708,7 @@ pub unsafe extern "C" fn wgpuDeviceGetNativeVkQueue(device: native::WGPUDevice) 
         }
         std::ptr::null_mut()
     }
-    #[cfg(not(feature = "vulkan"))]
+    #[cfg(any(not(feature = "vulkan"), target_vendor = "apple"))]
     {
         let _ = device;
         std::ptr::null_mut()
@@ -2719,7 +2719,7 @@ pub unsafe extern "C" fn wgpuDeviceGetNativeVkQueue(device: native::WGPUDevice) 
 pub unsafe extern "C" fn wgpuDeviceGetNativeVkQueueFamilyIndex(
     device: native::WGPUDevice,
 ) -> u32 {
-    #[cfg(feature = "vulkan")]
+    #[cfg(all(feature = "vulkan", not(target_vendor = "apple")))]
     {
         let device = device.as_ref().expect("invalid device");
         let hal_device = device.context.device_as_hal::<hal::api::Vulkan>(device.id);
@@ -2728,7 +2728,7 @@ pub unsafe extern "C" fn wgpuDeviceGetNativeVkQueueFamilyIndex(
         }
         0
     }
-    #[cfg(not(feature = "vulkan"))]
+    #[cfg(any(not(feature = "vulkan"), target_vendor = "apple"))]
     {
         let _ = device;
         0
@@ -2741,7 +2741,7 @@ pub unsafe extern "C" fn wgpuDeviceCreateTextureFromVkImage(
     descriptor: Option<&native::WGPUTextureDescriptor>,
     vk_image: *mut c_void,
 ) -> native::WGPUTexture {
-    #[cfg(feature = "vulkan")]
+    #[cfg(all(feature = "vulkan", not(target_vendor = "apple")))]
     {
         use ash::vk::Handle;
 
@@ -2831,7 +2831,7 @@ pub unsafe extern "C" fn wgpuDeviceCreateTextureFromVkImage(
             },
         }))
     }
-    #[cfg(not(feature = "vulkan"))]
+    #[cfg(any(not(feature = "vulkan"), target_vendor = "apple"))]
     {
         let _ = (device, descriptor, vk_image);
         std::ptr::null_mut()
